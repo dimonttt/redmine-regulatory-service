@@ -19,5 +19,17 @@ services:
     depends_on:
       - redmine_db
 
+  app_db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: redmine_service
+    ports:
+      - "5433:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+
 volumes:
   redmine_db_data:
+  app_db_data:
