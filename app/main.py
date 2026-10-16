@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.config import settings
+from app.api.health import router as health_router
 
 
 app = FastAPI(
@@ -9,10 +9,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(health_router)
 
-@app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "redmine_url": settings.redmine_url,
-    }
+
+@app.get("/")
+def root():
+    return {"service": "redmine-regulatory-service", "version": "0.1.0"}
