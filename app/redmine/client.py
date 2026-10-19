@@ -71,5 +71,29 @@ class RedmineClient:
             params["to"] = to_date.isoformat()
         return self._get("/time_entries.json", params)
 
+    def create_issue(
+        self,
+        project_id: int,
+        subject: str,
+        description: str = "",
+        tracker_id: int = 1,
+        status_id: int = 1,
+    ) -> dict:
+        """Создаёт задачу в Redmine. Возвращает созданный объект issue."""
+        payload = {
+            "issue": {
+                "project_id": project_id,
+                "subject": subject,
+                "description": description,
+                "tracker_id": tracker_id,
+                "status_id": status_id,
+            }
+        }
+        url = f"{self.base_url}/issues.json"
+        with httpx.Client(timeout=self.timeout, trust_env=False) as client:
+            response = client.post(url, headers=self._headers(), json=payload)
+            response.raise_for_status()
+            return response.json()
+
 
 redmine_client = RedmineClient()
