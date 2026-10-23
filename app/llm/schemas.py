@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class LLMWorkSuggestion(BaseModel):
-    """Одно предложение регламентной работы от LLM."""
+    # одно предложение регламентной работы от LLM
     title: str = Field(..., min_length=3, max_length=255)
     description: str = Field(..., min_length=10)
     reason: str = Field(..., min_length=10)
@@ -10,5 +10,5 @@ class LLMWorkSuggestion(BaseModel):
 
 
 class LLMResponse(BaseModel):
-    """Ответ LLM: список предложений."""
+    # ответ LLM: список предложений
     suggestions: list[LLMWorkSuggestion]
