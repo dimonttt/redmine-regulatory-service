@@ -9,7 +9,7 @@ from app.redmine.client import redmine_client
 
 
 def sync_clients(db: Session) -> dict:
-    """Синхронизирует проекты Redmine в таблицу clients. Не создаёт дубли."""
+    # синхронизация проектов Redmine в таблицу clients
     data = redmine_client.get_projects()
     created = 0
     updated = 0
@@ -43,12 +43,12 @@ def sync_time_entries(
     from_date: date | None = None,
     to_date: date | None = None,
 ) -> dict:
-    """Синхронизирует трудозатраты Redmine в work_history. Не создаёт дубли."""
-    data = redmine_client.get_time_entries(from_date=from_date, to_date=to_date)
+    # синхронизизация трудозатрат Redmine в work_history
+    entries = redmine_client.get_time_entries_all(from_date=from_date, to_date=to_date)
     created = 0
     skipped = 0
 
-    for entry in data["time_entries"]:
+    for entry in entries:
         stmt = select(WorkHistory).where(
             WorkHistory.redmine_time_entry_id == entry["id"]
         )
@@ -82,4 +82,4 @@ def sync_time_entries(
         created += 1
 
     db.commit()
-    return {"created": created, "skipped": skipped, "total": data["total_count"]}
+    return {"created": created, "skipped": skipped, "total": len(entries)}

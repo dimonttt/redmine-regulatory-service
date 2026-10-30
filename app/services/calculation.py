@@ -7,16 +7,13 @@ from app.models.client import Client
 from app.models.planned_hours import PlannedHours
 from app.models.work_history import WorkHistory
 
-
+# считает фактические часы по каждому клиенту за указанный месяц
+# возвращает список клиентов с недостатком
 def calculate_client_hours(
     db: Session,
     period_year: int,
     period_month: int,
 ) -> list[dict]:
-    """
-    Считает фактические часы по каждому клиенту за указанный месяц
-    и сравнивает с планом. Возвращает список клиентов с недостатком.
-    """
     period_start = date(period_year, period_month, 1)
     if period_month == 12:
         period_end = date(period_year + 1, 1, 1)

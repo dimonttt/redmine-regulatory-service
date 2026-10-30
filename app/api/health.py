@@ -12,13 +12,13 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health/live")
 def liveness():
-    """Liveness probe: процесс жив и отвечает."""
+    # liveness - процесс жив и отвечает
     return {"status": "ok"}
 
 
 @router.get("/health/ready")
 def readiness(db: Session = Depends(get_db)):
-    """Readiness probe: проверяем зависимости — БД, Redmine, LLM."""
+    # readiness - проверяем зависимости БД, Redmine, LLM
     checks = {
         "database": _check_database(db),
         "redmine": _check_redmine(),

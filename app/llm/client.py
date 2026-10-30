@@ -6,7 +6,7 @@ from app.config import settings
 
 
 def get_llm_client() -> OpenAI:
-    """Возвращает клиент для OpenAI-совместимого API."""
+    # Возвращает клиент для OpenAI-совместимого API
     return OpenAI(
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
@@ -14,7 +14,7 @@ def get_llm_client() -> OpenAI:
 
 
 def ask_llm(prompt: str, system_prompt: str | None = None) -> str:
-    """Отправляет промпт в LLM и возвращает текстовый ответ."""
+    # Отправляет промпт в LLM и возвращает текстовый ответ
     client = get_llm_client()
     messages = []
     if system_prompt:

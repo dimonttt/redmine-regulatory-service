@@ -46,7 +46,7 @@ def select_works_for_client(
 
     candidates = [w for w in works if w.id not in already_done_ids]
 
-    # Жадный подбор: берём работы от самых крупных, пока не наберём target_hours
+    # жадный подбор
     selected = []
     accumulated = 0.0
     for w in candidates:

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 
 from sqlalchemy.orm import Session
 
@@ -98,7 +98,7 @@ def run_calculation(
 
         # завершение
         run.status = "COMPLETED"
-        run.finished_at = datetime.utcnow()
+        run.finished_at = datetime.now(UTC)
         db.commit()
 
         return {
@@ -112,7 +112,7 @@ def run_calculation(
 
     except Exception as e:
         run.status = "FAILED"
-        run.finished_at = datetime.utcnow()
+        run.finished_at = datetime.now(UTC)
         run.error_message = str(e)
         db.commit()
         raise

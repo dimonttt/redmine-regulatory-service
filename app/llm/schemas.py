@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 
-
 class LLMWorkSuggestion(BaseModel):
     # одно предложение регламентной работы от LLM
     title: str = Field(..., min_length=3, max_length=255)
