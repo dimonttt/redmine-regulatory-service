@@ -8,15 +8,18 @@ from app.redmine.client import redmine_client
 
 
 def create_task_from_suggestion(db: Session, suggestion_id: int) -> dict:
-    """
-    Создаёт задачу в Redmine на основе одобренного предложения.
-    Защита от дублей через таблицу created_tasks.
-    """
+
+    # создание задачи в Redmine на основе одобренного предложения
+    # защита от дублей через таблицу created_tasks
+
     suggestion = db.execute(
         select(Suggestion).where(Suggestion.id == suggestion_id)
     ).scalar_one_or_none()
     if suggestion is None:
         raise ValueError(f"Предложение с id={suggestion_id} не найдено")
+
+    if suggestion.status == "REJECTED":
+        raise ValueError("Нельзя создать задачу по отклонённому предложению")
 
     # Проверка: не создана ли уже задача по этому предложению
     existing = db.execute(

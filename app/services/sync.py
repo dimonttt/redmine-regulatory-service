@@ -9,12 +9,12 @@ from app.redmine.client import redmine_client
 
 
 def sync_clients(db: Session) -> dict:
-    """Синхронизирует проекты Redmine в таблицу clients. Не создаёт дубли."""
-    data = redmine_client.get_projects()
+    # Синхронизирует проекты Redmine в таблицу clients
+    projects = redmine_client.get_projects_all()
     created = 0
     updated = 0
 
-    for project in data["projects"]:
+    for project in projects:
         stmt = select(Client).where(Client.redmine_project_id == project["id"])
         existing = db.execute(stmt).scalar_one_or_none()
 
@@ -35,7 +35,7 @@ def sync_clients(db: Session) -> dict:
             updated += 1
 
     db.commit()
-    return {"created": created, "updated": updated, "total": data["total_count"]}
+    return {"created": created, "updated": updated, "total": len(projects)}
 
 
 def sync_time_entries(
@@ -43,16 +43,35 @@ def sync_time_entries(
     from_date: date | None = None,
     to_date: date | None = None,
 ) -> dict:
-    """Синхронизирует трудозатраты Redmine в work_history. Не создаёт дубли."""
-    data = redmine_client.get_time_entries(from_date=from_date, to_date=to_date)
+    # cинхронизирует трудозатраты Redmine в work_history
+    entries = redmine_client.get_time_entries_all(from_date=from_date, to_date=to_date)
     created = 0
     skipped = 0
+    deleted = 0
 
-    for entry in data["time_entries"]:
-        stmt = select(WorkHistory).where(
+    redmine_ids = {entry["id"] for entry in entries}
+
+    # поиск всех записей в БД за период
+    stmt = select(WorkHistory)
+    if from_date:
+        stmt = stmt.where(WorkHistory.spent_on >= from_date)
+    if to_date:
+        stmt = stmt.where(WorkHistory.spent_on <= to_date)
+    
+    local_entries = db.execute(stmt).scalars().all()
+
+    # удаление, если запись есть у нас, но её нет в Redmine
+    for local in local_entries:
+        if local.redmine_time_entry_id not in redmine_ids:
+            db.delete(local)
+            deleted += 1
+
+    # добавление, если записи нет у нас, но есть в Redmine
+    for entry in entries:
+        stmt_check = select(WorkHistory).where(
             WorkHistory.redmine_time_entry_id == entry["id"]
         )
-        if db.execute(stmt).scalar_one_or_none() is not None:
+        if db.execute(stmt_check).scalar_one_or_none() is not None:
             skipped += 1
             continue
 
@@ -82,4 +101,9 @@ def sync_time_entries(
         created += 1
 
     db.commit()
-    return {"created": created, "skipped": skipped, "total": data["total_count"]}
+    return {
+        "created": created,
+        "skipped": skipped,
+        "deleted": deleted,
+        "total": len(entries),
+    }

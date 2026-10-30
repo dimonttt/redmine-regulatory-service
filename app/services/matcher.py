@@ -16,7 +16,7 @@ def select_works_for_client(
     period_month: int,
 ) -> list[dict]:
     """
-    Подбирает типовые работы для клиента так, чтобы их суммарная трудоёмкость
+    Подбор типовых работ для клиента так, чтобы их суммарная трудоемкость
     была примерно равна target_hours. Исключает работы, которые уже выполнялись
     у этого клиента за указанный период.
     """
@@ -46,7 +46,7 @@ def select_works_for_client(
 
     candidates = [w for w in works if w.id not in already_done_ids]
 
-    # Жадный подбор: берём работы от самых крупных, пока не наберём target_hours
+    # жадный подбор
     selected = []
     accumulated = 0.0
     for w in candidates:

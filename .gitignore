@@ -24,3 +24,7 @@ Thumbs.db
 # БД
 *.sqlite
 *.db
+
+node_modules/
+frontend/node_modules/
+frontend/dist/

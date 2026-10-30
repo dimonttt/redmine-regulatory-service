@@ -13,7 +13,8 @@ def main():
 
         print("Синхронизация трудозатрат за октябрь 2026...")
         result = sync_time_entries(db, date(2026, 10, 1), date(2026, 10, 31))
-        print(f"  Создано: {result['created']}, пропущено: {result['skipped']}")
+        print(f"  Создано: {result['created']}, пропущено: {result['skipped']}, удалено: {result.get('deleted', 0)}")
+        
     finally:
         db.close()
 

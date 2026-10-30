@@ -10,7 +10,7 @@ from app.models.client import Client
 from app.models.work_history import WorkHistory
 
 
-SYSTEM_PROMPT = """Ты — эксперт по сопровождению IT-инфраструктуры.
+SYSTEM_PROMPT = """Ты - эксперт по сопровождению IT-инфраструктуры.
 Твоя задача - предложить новые полезные регламентные работы для клиента,
 у которого не хватает часов по договору. Предлагай только реальные технические
 работы, которые могут принести пользу. Отвечай строго в формате JSON."""
@@ -47,10 +47,8 @@ def generate_llm_suggestions(
     client_id: int,
     target_hours: float,
 ) -> list[dict]:
-    """
-    Запрашивает у LLM новые предложения регламентных работ для клиента.
-    Возвращает список провалидированных предложений.
-    """
+    # запрашивает у LLM новые предложения регламентных работ для клиента
+    # Возвращает список провалидированных предложений
     client = db.execute(
         select(Client).where(Client.id == client_id)
     ).scalar_one_or_none()
@@ -88,7 +86,7 @@ def generate_llm_suggestions(
     except Exception as e:
         raise ValueError(f"Не удалось распарсить ответ LLM: {e}\nОтвет: {raw_response[:500]}")
 
-    # Ограничение по количеству и трудоёмкости (бизнес-правила)
+    # Ограничение по количеству и трудоемкости
     suggestions = []
     for s in validated.suggestions[: settings.llm_max_suggestions]:
         suggestions.append({
