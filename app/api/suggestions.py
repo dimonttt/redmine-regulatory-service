@@ -11,6 +11,7 @@ from app.db import get_db
 from app.models.suggestion import Suggestion
 from app.services.task_creator import create_task_from_suggestion
 
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/api/suggestions", tags=["suggestions"])
 
@@ -24,6 +25,7 @@ def list_suggestions(
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
+    user: str = Depends(get_current_user),
 ):
     # возврат списка предложений с фильтрами
     stmt = select(Suggestion).order_by(Suggestion.id)
@@ -33,14 +35,18 @@ def list_suggestions(
         stmt = stmt.where(Suggestion.client_id == client_id)
     if status is not None:
         stmt = stmt.where(Suggestion.status == status)
-    if source is not None:     
+    if source is not None:
         stmt = stmt.where(Suggestion.source == source)
     stmt = stmt.limit(limit).offset(offset)
     return db.execute(stmt).scalars().all()
 
 
 @router.get("/{suggestion_id}", response_model=SuggestionResponse)
-def get_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+def get_suggestion(
+    suggestion_id: int, 
+    db: Session = Depends(get_db),
+    user: str = Depends(get_current_user),
+):
     s = db.execute(
         select(Suggestion).where(Suggestion.id == suggestion_id)
     ).scalar_one_or_none()
@@ -50,7 +56,11 @@ def get_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{suggestion_id}/approve", response_model=SuggestionStatusResponse)
-def approve_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+def approve_suggestion(
+    suggestion_id: int, 
+    db: Session = Depends(get_db),
+    user: str = Depends(get_current_user), 
+):
     # смена статуса предложения на APPROVED
     s = db.execute(
         select(Suggestion).where(Suggestion.id == suggestion_id)
@@ -69,7 +79,11 @@ def approve_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{suggestion_id}/reject", response_model=SuggestionStatusResponse)
-def reject_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+def reject_suggestion(
+    suggestion_id: int, 
+    db: Session = Depends(get_db),
+    user: str = Depends(get_current_user), 
+):
     # смена статуса предложения на REJECTED
     s = db.execute(
         select(Suggestion).where(Suggestion.id == suggestion_id)
@@ -88,7 +102,11 @@ def reject_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{suggestion_id}/create-task", response_model=dict)
-def create_task(suggestion_id: int, db: Session = Depends(get_db)):
+def create_task(
+    suggestion_id: int, 
+    db: Session = Depends(get_db),
+    user: str = Depends(get_current_user), 
+):
     # создание задачи в Redmine по предложению
     try:
         result = create_task_from_suggestion(db, suggestion_id)

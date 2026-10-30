@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     llm_max_suggestions: int = 3
     llm_max_hours_per_suggestion: int = 8
 
+    secret_key: str = "super-secret-key-for-my-service-12345"
+    admin_username: str = "admin"
+    admin_password: str = "admin12345"
+
     @property
     def database_url(self) -> str:
         return (
