@@ -13,7 +13,7 @@
     <!-- ЭКРАН 2: ДАШБОРД -->
     <div v-else>
       <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-        <h2>Панель управления сервисом</h2>
+        <h2>Управление регламентными работами</h2>
         <button @click="logout" style="padding: 5px 15px; cursor: pointer;">Выйти</button>
       </div>
 
@@ -68,7 +68,7 @@
           
           <div v-if="groupedSuggestions.length > 0">
             <div v-for="group in groupedSuggestions" :key="group.client_id" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 10px; border-radius: 5px; background: white;">
-              <h4>Клиент ID: {{ clients[group.client_id] || group.client_id }}</h4>
+              <h4>{{ clients[group.client_id] || group.client_id }}</h4>
               
               <table border="1" style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px;">
                 <tr style="background: #eee;">
@@ -174,6 +174,7 @@ const login = async () => {
     localStorage.setItem('token', res.data.access_token);
     token.value = res.data.access_token;
     fetchRuns();
+    fetchClients();
   } catch (e) {
     error.value = 'Неверный логин или пароль';
   }

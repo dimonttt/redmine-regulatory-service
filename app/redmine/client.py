@@ -43,15 +43,13 @@ class RedmineClient:
             
             data = self._get(path, params)
             
-            # Определяем ключ, под которым лежат данные (зависит от endpoint)
-            # Но мы можем просто взять первый попавшийся список в словаре, кроме служебных полей
             items = next((v for k, v in data.items() if isinstance(v, list)), [])
             all_items.extend(items)
             
-            # Смотрим, сколько всего записей на сервере
+            # сколько всего записей на сервере
             total = data.get("total_count", 0)
             
-            # Если мы собрали всё, или сервер вернул пустоту - выходим из цикла
+            # если собрали все, или сервер вернул пустоту - выход из цикла
             if offset + len(items) >= total or not items:
                 break
             
@@ -100,11 +98,11 @@ class RedmineClient:
 
 
     def get_projects_all(self) -> list:
-        """Возвращает ВСЕ проекты."""
+        # возвращает ВСЕ проекты
         return self._get_all_pages("/projects.json")
 
     def get_time_entries_all(self, from_date=None, to_date=None) -> list:
-        """Возвращает ВСЕ трудозатраты за период."""
+        # возвращает все трудозатраты за период
         params = {}
         if from_date:
             params["from"] = from_date.isoformat()
@@ -117,7 +115,7 @@ class RedmineClient:
         project_id: int | None = None,
         status_id: str = "*",
     ) -> list[dict]:
-        """Получает ВСЕ задачи, автоматически проходя по страницам."""
+        # получает все задачи, автоматически проходя по страницам
         params: dict[str, Any] = {"status_id": status_id}
         if project_id is not None:
             params["project_id"] = project_id

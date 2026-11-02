@@ -17,14 +17,14 @@ WORKS = [
         "name": "Обновление безопасности сервера",
         "description": "Установка патчей безопасности ОС и сервисов",
         "category": "Безопасность",
-        "estimated_hours": 4,
+        "estimated_hours": 1,
     },
     {
         "code": "LOG_AUDIT",
         "name": "Аудит журналов",
         "description": "Анализ журналов на предмет ошибок и подозрительной активности",
         "category": "Мониторинг",
-        "estimated_hours": 3,
+        "estimated_hours": 1,
     },
     {
         "code": "DISK_CLEANUP",
@@ -45,7 +45,7 @@ WORKS = [
         "name": "Настройка мониторинга",
         "description": "Развёртывание и настройка агентов мониторинга",
         "category": "Мониторинг",
-        "estimated_hours": 6,
+        "estimated_hours": 2,
     },
     {
         "code": "SSL_RENEW",
@@ -59,21 +59,21 @@ WORKS = [
         "name": "Упрочнение Docker-окружения",
         "description": "Аудит конфигураций контейнеров, ограничение прав",
         "category": "Контейнеры",
-        "estimated_hours": 4,
+        "estimated_hours": 1,
     },
     {
         "code": "PERF_REVIEW",
         "name": "Обзор производительности",
         "description": "Снятие метрик нагрузки, рекомендации по оптимизации",
         "category": "Производительность",
-        "estimated_hours": 5,
+        "estimated_hours": 2,
     },
     {
         "code": "DOC_UPDATE",
         "name": "Актуализация документации",
         "description": "Обновление технической документации по инфраструктуре",
         "category": "Документация",
-        "estimated_hours": 3,
+        "estimated_hours": 1,
     },
 ]
 

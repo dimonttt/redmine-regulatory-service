@@ -22,18 +22,20 @@ def _build_user_prompt(client: Client, target_hours: float, history_summary: str
 Отрасль: {client.industry or "не указана"}
 Описание: {client.description or "нет описания"}
 
-Недостаток часов по договору: {target_hours:.1f} часов
+Недостаток часов по договору: {target_hours:.1f} часов.
 
-Статистика по выполненным работам за последнее время:
-{history_summary or "нет данных"}
+ВАЖНОЕ ОГРАНИЧЕНИЕ: суммарная трудоемкость всех предложенных тобой работ НЕ ДОЛЖНА ПРЕВЫШАТЬ {target_hours:.1f} часов. 
+Предложи работы так, чтобы их сумма была максимально близка к {target_hours:.1f} часам, но не больше.
+
+Статистика по выполненным работам:
+{history_summary}
 
 Предложи {settings.llm_max_suggestions} новых регламентных работ, которые:
-1. Принесут реальную пользу этому клиенту с учётом его отрасли и описания.
+1. Принесут реальную пользу этому клиенту с учётом его отрасли.
 2. Не дублируют уже выполненные работы.
-3. В сумме покроют часть недостатка часов ({target_hours:.1f} ч).
-4. Каждая работа — не более {settings.llm_max_hours_per_suggestion} часов.
+3. Каждая работа — не более {settings.llm_max_hours_per_suggestion} часов.
 
-Верни ответ строго в таком JSON-формате (без markdown, без пояснений):
+Верни ответ строго в таком JSON-формате:
 {{
   "suggestions": [
     {{
@@ -96,13 +98,19 @@ def generate_llm_suggestions(
 
     # ограничение по количеству и трудоемкости
     suggestions = []
+    total_generated_hours = 0.0
+    
     for s in validated.suggestions[: settings.llm_max_suggestions]:
+        if total_generated_hours + s.estimated_hours > target_hours:
+            continue
+            
         suggestions.append({
             "title": s.title,
             "description": s.description,
             "reason": s.reason,
-            "estimated_hours": min(s.estimated_hours, settings.llm_max_hours_per_suggestion),
+            "estimated_hours": s.estimated_hours,
             "source": "LLM",
         })
+        total_generated_hours += s.estimated_hours
 
     return suggestions
