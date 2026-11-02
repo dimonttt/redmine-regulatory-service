@@ -13,23 +13,29 @@ from app.models.work_history import WorkHistory
 SYSTEM_PROMPT = """Ты - эксперт по сопровождению IT-инфраструктуры.
 Твоя задача - предложить новые полезные регламентные работы для клиента,
 у которого не хватает часов по договору. Предлагай только реальные технические
-работы, которые могут принести пользу. Отвечай строго в формате JSON."""
+работы, которые могут принести пользу с учётом специфики клиента. 
+Отвечай строго в формате JSON."""
 
 
 def _build_user_prompt(client: Client, target_hours: float, history_summary: str) -> str:
     return f"""Клиент: {client.name}
-Недостаток часов по договору: {target_hours:.1f} часов
+Отрасль: {client.industry or "не указана"}
+Описание: {client.description or "нет описания"}
 
-История выполненных работ за последний период:
-{history_summary or "нет данных"}
+Недостаток часов по договору: {target_hours:.1f} часов.
+
+ВАЖНОЕ ОГРАНИЧЕНИЕ: суммарная трудоемкость всех предложенных тобой работ НЕ ДОЛЖНА ПРЕВЫШАТЬ {target_hours:.1f} часов. 
+Предложи работы так, чтобы их сумма была максимально близка к {target_hours:.1f} часам, но не больше.
+
+Статистика по выполненным работам:
+{history_summary}
 
 Предложи {settings.llm_max_suggestions} новых регламентных работ, которые:
-1. Принесут реальную пользу этому клиенту.
+1. Принесут реальную пользу этому клиенту с учётом его отрасли.
 2. Не дублируют уже выполненные работы.
-3. В сумме покроют часть недостатка часов ({target_hours:.1f} ч).
-4. Каждая работа — не более {settings.llm_max_hours_per_suggestion} часов.
+3. Каждая работа — не более {settings.llm_max_hours_per_suggestion} часов.
 
-Верни ответ строго в таком JSON-формате (без markdown, без пояснений):
+Верни ответ строго в таком JSON-формате:
 {{
   "suggestions": [
     {{
@@ -47,27 +53,31 @@ def generate_llm_suggestions(
     client_id: int,
     target_hours: float,
 ) -> list[dict]:
-    # запрашивает у LLM новые предложения регламентных работ для клиента
-    # Возвращает список провалидированных предложений
     client = db.execute(
         select(Client).where(Client.id == client_id)
     ).scalar_one_or_none()
     if client is None:
         raise ValueError(f"Client {client_id} not found")
 
-    # Краткая история работ
     entries = db.execute(
         select(WorkHistory)
         .where(WorkHistory.client_id == client_id)
         .order_by(WorkHistory.spent_on.desc())
-        .limit(10)
+        .limit(200)
     ).scalars().all()
 
-    history_lines = [
-        f"- {e.spent_on}: {e.activity or 'работа'} — {e.hours} ч"
-        for e in entries
-    ]
-    history_summary = "\n".join(history_lines)
+    # краткая выжимка по видам деятельности
+    activities_count = {}
+    total_hours = 0.0
+    for e in entries:
+        act = e.activity or "Разное"
+        activities_count[act] = activities_count.get(act, 0) + 1
+        total_hours += float(e.hours)
+
+    history_summary = f"Всего записей о работах: {len(entries)} (суммарно {total_hours:.1f} ч).\n"
+    history_summary += "Чаще всего выполнялись работы видов:\n"
+    for act, count in activities_count.items():
+        history_summary += f"- {act} ({count} раз)\n"
 
     prompt = _build_user_prompt(client, target_hours, history_summary)
     raw_response = ask_llm(prompt, system_prompt=SYSTEM_PROMPT)
@@ -86,15 +96,21 @@ def generate_llm_suggestions(
     except Exception as e:
         raise ValueError(f"Не удалось распарсить ответ LLM: {e}\nОтвет: {raw_response[:500]}")
 
-    # Ограничение по количеству и трудоемкости
+    # ограничение по количеству и трудоемкости
     suggestions = []
+    total_generated_hours = 0.0
+    
     for s in validated.suggestions[: settings.llm_max_suggestions]:
+        if total_generated_hours + s.estimated_hours > target_hours:
+            continue
+            
         suggestions.append({
             "title": s.title,
             "description": s.description,
             "reason": s.reason,
-            "estimated_hours": min(s.estimated_hours, settings.llm_max_hours_per_suggestion),
+            "estimated_hours": s.estimated_hours,
             "source": "LLM",
         })
+        total_generated_hours += s.estimated_hours
 
     return suggestions

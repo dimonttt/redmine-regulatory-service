@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -16,7 +16,7 @@ class Token(BaseModel):
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=60)  # Токен живет 1 час
+    expire = datetime.now(timezone.utc) + timedelta(minutes=60)  # Токен живет 1 час
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm="HS256")
     return encoded_jwt

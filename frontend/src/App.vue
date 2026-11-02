@@ -4,8 +4,8 @@
     <!-- ЭКРАН 1: ЛОГИН -->
     <div v-if="!token" style="max-width: 300px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
       <h2>Вход в систему</h2>
-      <input v-model="username" placeholder="Логин (admin)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
-      <input v-model="password" type="password" placeholder="Пароль (admin12345)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+      <input v-model="username" placeholder="Логин (admin)" style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;" />
+      <input v-model="password" type="password" placeholder="Пароль (admin12345)" style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;" />
       <button @click="login" style="width: 100%; padding: 10px; background-color: #42b983; color: white; border: none; cursor: pointer;">Войти</button>
       <p v-if="error" style="color: red;">{{ error }}</p>
     </div>
@@ -13,7 +13,7 @@
     <!-- ЭКРАН 2: ДАШБОРД -->
     <div v-else>
       <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-        <h2>Панель управления сервисом</h2>
+        <h2>Управление регламентными работами</h2>
         <button @click="logout" style="padding: 5px 15px; cursor: pointer;">Выйти</button>
       </div>
 
@@ -68,7 +68,7 @@
           
           <div v-if="groupedSuggestions.length > 0">
             <div v-for="group in groupedSuggestions" :key="group.client_id" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 10px; border-radius: 5px; background: white;">
-              <h4>Клиент ID: {{ clients[group.client_id] || group.client_id }}</h4>
+              <h4>{{ clients[group.client_id] || group.client_id }}</h4>
               
               <table border="1" style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px;">
                 <tr style="background: #eee;">
@@ -141,7 +141,7 @@ const selectedYear = ref(2026);
 const selectedMonth = ref(10);
 const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
-// Вычисляемое свойство: группируем предложения по клиентам
+// группируем предложения по клиентам
 const groupedSuggestions = computed(() => {
   const groups = {};
   for (const s of suggestions.value) {
@@ -174,6 +174,7 @@ const login = async () => {
     localStorage.setItem('token', res.data.access_token);
     token.value = res.data.access_token;
     fetchRuns();
+    fetchClients();
   } catch (e) {
     error.value = 'Неверный логин или пароль';
   }
