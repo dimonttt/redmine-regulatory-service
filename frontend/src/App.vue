@@ -4,8 +4,8 @@
     <!-- ЭКРАН 1: ЛОГИН -->
     <div v-if="!token" style="max-width: 300px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
       <h2>Вход в систему</h2>
-      <input v-model="username" placeholder="Логин (admin)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
-      <input v-model="password" type="password" placeholder="Пароль (admin12345)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+      <input v-model="username" placeholder="Логин (admin)" style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;" />
+      <input v-model="password" type="password" placeholder="Пароль (admin12345)" style="width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;" />
       <button @click="login" style="width: 100%; padding: 10px; background-color: #42b983; color: white; border: none; cursor: pointer;">Войти</button>
       <p v-if="error" style="color: red;">{{ error }}</p>
     </div>
@@ -141,7 +141,7 @@ const selectedYear = ref(2026);
 const selectedMonth = ref(10);
 const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
-// Вычисляемое свойство: группируем предложения по клиентам
+// группируем предложения по клиентам
 const groupedSuggestions = computed(() => {
   const groups = {};
   for (const s of suggestions.value) {

@@ -8,20 +8,28 @@ from app.redmine.client import redmine_client
 
 
 def create_task_from_suggestion(db: Session, suggestion_id: int) -> dict:
-
     # создание задачи в Redmine на основе одобренного предложения
     # защита от дублей через таблицу created_tasks
 
+    # поиск предложения
     suggestion = db.execute(
         select(Suggestion).where(Suggestion.id == suggestion_id)
     ).scalar_one_or_none()
     if suggestion is None:
         raise ValueError(f"Предложение с id={suggestion_id} не найдено")
 
+    # проверка статуса
     if suggestion.status == "REJECTED":
         raise ValueError("Нельзя создать задачу по отклонённому предложению")
 
-    # Проверка: не создана ли уже задача по этому предложению
+    # поиск клиента
+    client = db.execute(
+        select(Client).where(Client.id == suggestion.client_id)
+    ).scalar_one_or_none()
+    if client is None:
+        raise ValueError(f"Клиент id={suggestion.client_id} не найден")
+
+    # не создана ли уже задача по этому предложению
     existing = db.execute(
         select(CreatedTask).where(CreatedTask.suggestion_id == suggestion_id)
     ).scalar_one_or_none()
@@ -31,13 +39,23 @@ def create_task_from_suggestion(db: Session, suggestion_id: int) -> dict:
             "redmine_issue_id": existing.redmine_issue_id,
         }
 
-    client = db.execute(
-        select(Client).where(Client.id == suggestion.client_id)
+    # у этого клиента уже есть задача с таким же названием в этом проекте
+    existing_title = db.execute(
+        select(CreatedTask)
+        .where(CreatedTask.client_id == client.id)
+        .where(CreatedTask.title == suggestion.title)
+        .where(CreatedTask.redmine_project_id == client.redmine_project_id)
     ).scalar_one_or_none()
-    if client is None:
-        raise ValueError(f"Клиент id={suggestion.client_id} не найден")
+    
+    if existing_title is not None:
+        suggestion.status = "CREATED" 
+        db.commit()
+        return {
+            "already_created": True,
+            "redmine_issue_id": existing_title.redmine_issue_id,
+        }
 
-    # Создание задачи в Redmine
+    # создание в Redmine
     issue_data = redmine_client.create_issue(
         project_id=client.redmine_project_id,
         subject=suggestion.title,
@@ -48,7 +66,6 @@ def create_task_from_suggestion(db: Session, suggestion_id: int) -> dict:
     )
     issue_id = issue_data["issue"]["id"]
 
-    # Сохранение факта создания
     db.add(
         CreatedTask(
             suggestion_id=suggestion.id,
