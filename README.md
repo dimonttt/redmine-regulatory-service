@@ -83,6 +83,7 @@ npm run dev
 
 ## Архитектура и структура проекта
 
+```text
 redmine-practice/
 ├── app/                 # Бэкенд (FastAPI)
 │   ├── api/             # Роутеры (эндпоинты)
