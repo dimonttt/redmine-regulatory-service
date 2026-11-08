@@ -90,12 +90,37 @@ def generate_llm_suggestions(
             cleaned = cleaned[4:]
         cleaned = cleaned.strip()
 
+    if cleaned.startswith("{") and not cleaned.endswith("}"):
+        # Если модель забыла закрыть массив и объект, пробуем починить
+        if not cleaned.endswith("]"):
+            cleaned += "]"
+        cleaned += "}"
+
     try:
         parsed = json.loads(cleaned)
         validated = LLMResponse(**parsed)
     except Exception as e:
-        raise ValueError(f"Не удалось распарсить ответ LLM: {e}\nОтвет: {raw_response[:500]}")
-
+        # Если не получилось с первого раза, просим модель исправиться
+        print(f"Ошибка парсинга JSON (попытка 2): {e}")
+        
+        # Отправляем промпт еще раз с жестким указанием
+        error_prompt = f"{prompt}\n\nВНИМАНИЕ: Твой предыдущий ответ был невалидным JSON! Обязательно добавь поле 'estimated_hours' и закрой все скобки."
+        raw_response_2 = ask_llm(error_prompt, system_prompt=SYSTEM_PROMPT)
+        
+        # Очистка от markdown
+        cleaned_2 = raw_response_2.strip()
+        if cleaned_2.startswith("```"):
+            cleaned_2 = cleaned_2.split("```")[1]
+            if cleaned_2.startswith("json"):
+                cleaned_2 = cleaned_2[4:]
+            cleaned_2 = cleaned_2.strip()
+            
+        try:
+            parsed = json.loads(cleaned_2)
+            validated = LLMResponse(**parsed)
+        except Exception as e2:
+            raise ValueError(f"Не удалось распарсить ответ LLM после 2 попыток: {e2}\nОтвет: {raw_response_2[:500]}")
+    
     # ограничение по количеству и трудоемкости
     suggestions = []
     total_generated_hours = 0.0

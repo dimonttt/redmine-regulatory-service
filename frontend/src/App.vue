@@ -46,18 +46,22 @@
         <div style="flex: 1; border: 1px solid #ccc; padding: 15px; border-radius: 8px;">
           <h3>История запусков</h3>
           <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
-            <tr style="background: #f0f0f0;">
-              <th style="padding: 8px;">ID</th>
-              <th style="padding: 8px;">Период</th>
-              <th style="padding: 8px;">Действие</th>
-            </tr>
-            <tr v-for="run in runs" :key="run.id">
-              <td style="padding: 8px;">{{ run.id }}</td>
-              <td style="padding: 8px;">{{ run.period_year }}-{{ run.period_month }}</td>
-              <td style="padding: 8px;">
-                <button @click="loadResults(run.id)" style="cursor: pointer;">Посмотреть</button>
-              </td>
-            </tr>
+            <thead>
+              <tr style="background: #f0f0f0;">
+                <th style="padding: 8px;">ID</th>
+                <th style="padding: 8px;">Период</th>
+                <th style="padding: 8px;">Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="run in runs" :key="run.id">
+                <td style="padding: 8px;">{{ run.id }}</td>
+                <td style="padding: 8px;">{{ run.period_year }}-{{ run.period_month }}</td>
+                <td style="padding: 8px;">
+                  <button @click="loadResults(run.id)" style="cursor: pointer;">Посмотреть</button>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
 
@@ -69,31 +73,62 @@
           <div v-if="groupedSuggestions.length > 0">
             <div v-for="group in groupedSuggestions" :key="group.client_id" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 10px; border-radius: 5px; background: white;">
               <h4>{{ clients[group.client_id] || group.client_id }}</h4>
-              
               <table border="1" style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px;">
-                <tr style="background: #eee;">
-                  <th style="padding: 6px;">Работа</th>
-                  <th style="padding: 6px;">Часы</th>
-                  <th style="padding: 6px;">Статус</th>
-                  <th style="padding: 6px;">Действия</th>
-                </tr>
-                <tr v-for="s in group.items" :key="s.id">
-                  <td style="padding: 6px;">
-                    {{ s.title }} 
-                    <span v-if="s.source === 'LLM'" style="color: purple; font-size: 11px; font-weight: bold;">[AI]</span>
-                  </td>
-                  <td style="padding: 6px;">{{ s.estimated_hours }} ч</td>
-                  <td style="padding: 6px;">
-                    <span :style="{color: s.status === 'CREATED' ? 'blue' : (s.status === 'APPROVED' ? 'green' : (s.status === 'REJECTED' ? 'red' : 'orange'))}">
-                      {{ translateStatus(s.status) }}
-                    </span>
-                  </td>
-                  <td style="padding: 6px;">
-                    <button v-if="s.status === 'NEW'" @click="approve(s.id)" style="cursor: pointer; background: #d4edda; margin-right: 5px;">Одобрить</button>
-                    <button v-if="s.status === 'NEW'" @click="reject(s.id)" style="cursor: pointer; background: #f8d7da; margin-right: 5px;">Отклонить</button>
-                    <button v-if="s.status === 'APPROVED'" @click="createTask(s.id)" style="cursor: pointer; background: #cce5ff;">Создать в Redmine</button>
-                  </td>
-                </tr>
+                <thead>
+                  <tr style="background: #eee;">
+                    <th style="padding: 6px;">Работа</th>
+                    <th style="padding: 6px;">Часы</th>
+                    <th style="padding: 6px;">Статус</th>
+                    <th style="padding: 6px;">Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="s in group.items" :key="s.id">
+                    
+                    <!-- Основная строка -->
+                    <tr>
+                      <td 
+                        style="padding: 6px;" 
+                        :style="{ cursor: s.source === 'LLM' ? 'pointer' : 'default' }"
+                        @click="s.source === 'LLM' ? toggleDetails(s.id) : null"
+                      >
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                          <span>
+                            {{ s.title }} 
+                            <span v-if="s.source === 'LLM'" style="color: purple; font-size: 11px; font-weight: bold;">[AI]</span>
+                          </span>
+                          <span v-if="s.source === 'LLM'" style="font-size: 10px; color: #999;">
+                            {{ expandedRowId === s.id ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </td>
+                      <td style="padding: 6px;">{{ s.estimated_hours }} ч</td>
+                      <td style="padding: 6px;">
+                        <span :style="{color: s.status === 'CREATED' ? 'blue' : (s.status === 'APPROVED' ? 'green' : (s.status === 'REJECTED' ? 'red' : 'orange'))}">
+                          {{ translateStatus(s.status) }}
+                        </span>
+                      </td>
+                      <td style="padding: 6px;">
+                        <button v-if="s.status === 'NEW'" @click="approve(s.id)" style="cursor: pointer; background: #d4edda; margin-right: 5px;">Одобрить</button>
+                        <button v-if="s.status === 'NEW'" @click="reject(s.id)" style="cursor: pointer; background: #f8d7da; margin-right: 5px;">Отклонить</button>
+                        <button v-if="s.status === 'APPROVED'" @click="createTask(s.id)" style="cursor: pointer; background: #cce5ff;">Создать в Redmine</button>
+                      </td>
+                    </tr>
+
+                    <!-- Выпадающая строка с обоснованием -->
+                    <tr v-if="expandedRowId === s.id">
+                      <td colspan="4" style="padding: 10px; background-color: #f0f8ff; border-top: 1px solid #ddd; font-size: 13px;">
+                        <div style="margin-bottom: 5px;">
+                          <strong>Описание:</strong> {{ s.description || 'Не указано' }}
+                        </div>
+                        <div>
+                          <strong>Обоснование:</strong> <span style="color: #555; font-style: italic;">{{ s.reason || 'Не указано' }}</span>
+                        </div>
+                      </td>
+                    </tr>
+
+                  </template>
+                </tbody>
               </table>
             </div>
           </div>
@@ -117,9 +152,14 @@ const loading = ref(false);
 const runResult = ref('');
 const currentRunId = ref(null);
 const suggestions = ref([]);
+const expandedRowId = ref(null);
 
 
 const clients = ref({}); // Словарь для быстрого поиска имени по ID
+
+const toggleDetails = (id) => {
+  expandedRowId.value = expandedRowId.value === id ? null : id;
+};
 
 const fetchClients = async () => {
   const res = await api.get('/api/runs/clients');
@@ -148,7 +188,9 @@ const groupedSuggestions = computed(() => {
     if (!groups[s.client_id]) {
       groups[s.client_id] = { client_id: s.client_id, items: [] };
     }
-    groups[s.client_id].items.push(s);
+    if (s && s.id) { // проверяем, что объект существует и у него есть id
+      groups[s.client_id].items.push(s);
+}
   }
   return Object.values(groups);
 });
@@ -212,8 +254,15 @@ const startRun = async () => {
 
 const loadResults = async (runId) => {
   currentRunId.value = runId;
-  const res = await api.get(`/api/suggestions?run_id=${runId}`);
-  suggestions.value = res.data;
+  suggestions.value = []; // очищаем старые данные
+  try {
+    const res = await api.get(`/api/suggestions?run_id=${runId}`);
+    console.log('Загружено предложений:', res.data.length); // для отладки
+    suggestions.value = res.data;
+  } catch (e) {
+    console.error('Ошибка загрузки предложений:', e);
+    alert('Не удалось загрузить предложения. Проверьте консоль.');
+  }
 };
 
 const approve = async (id) => {

@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/' });
+const api = axios.create({ 
+  baseURL: '/',
+  timeout: 120000
+});
 
 // подставляет токен в каждый запрос
 api.interceptors.request.use(config => {

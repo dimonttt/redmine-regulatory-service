@@ -26,5 +26,6 @@ def ask_llm(prompt: str, system_prompt: str | None = None) -> str:
         messages=messages,
         temperature=0.7,
         response_format={"type": "json_object"},
+        max_tokens = 2000,
     )
     return response.choices[0].message.content or ""
