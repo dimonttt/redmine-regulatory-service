@@ -1,24 +1,5 @@
 services:
-  redmine_db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: redmine
-      POSTGRES_PASSWORD: redmine
-      POSTGRES_DB: redmine
-    volumes:
-      - redmine_db_data:/var/lib/postgresql/data
-
-  redmine:
-    image: redmine:6
-    ports:
-      - "3000:3000"
-    environment:
-      REDMINE_DB_POSTGRES: redmine_db
-      REDMINE_DB_USERNAME: redmine
-      REDMINE_DB_PASSWORD: redmine
-    depends_on:
-      - redmine_db
-
+  # База данных для сервиса
   app_db:
     image: postgres:16
     environment:
@@ -30,6 +11,40 @@ services:
     volumes:
       - app_db_data:/var/lib/postgresql/data
 
+  # Бэкенд (FastAPI)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_DB_HOST=app_db
+      - APP_DB_PORT=5432
+      - APP_DB_NAME=redmine_service
+      - APP_DB_USER=app
+      - APP_DB_PASSWORD=app
+      - REDMINE_URL=http://host.docker.internal:3000
+      - REDMINE_API_KEY=${REDMINE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - LLM_BASE_URL=http://host.docker.internal:11434/v1
+      - LLM_MODEL=${LLM_MODEL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin12345}
+    depends_on:
+      - app_db
+    volumes:
+      - .:/app
+
+  # Фронтенд (Vue)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
 volumes:
-  redmine_db_data:
   app_db_data:
