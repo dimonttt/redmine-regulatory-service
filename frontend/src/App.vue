@@ -35,9 +35,16 @@
             </select>
           </label>
         </div>
-        <button @click="startRun" :disabled="loading" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; font-size: 16px;">
-          {{ loading ? 'Идет подсчет...' : 'Запустить расчет' }}
-        </button>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <button @click="startRun" :disabled="loading" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; font-size: 16px; opacity: loading ? 0.6 : 1;">
+            {{ loading ? 'Идет подсчет...' : 'Запустить расчет' }}
+          </button>
+          <!-- Индикатор загрузки-->
+          <div v-if="loading" style="display: flex; align-items: center; gap: 8px; color: #007bff; font-weight: bold;">
+            <div style="width: 16px; height: 16px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span>Пожалуйста, подождите...</span>
+          </div>
+        </div>
         <span v-if="runResult" style="color: green; font-weight: bold;">{{ runResult }}</span>
       </div>
 
@@ -284,3 +291,10 @@ onMounted(() => {
   if (token.value) fetchRuns();
 });
 </script>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
