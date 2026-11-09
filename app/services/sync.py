@@ -43,15 +43,15 @@ def sync_time_entries(
     from_date: date | None = None,
     to_date: date | None = None,
 ) -> dict:
-    # cинхронизирует трудозатраты Redmine в work_history
+    # Синхронизирует трудозатраты Redmine в work_history
     entries = redmine_client.get_time_entries_all(from_date=from_date, to_date=to_date)
     created = 0
     skipped = 0
     deleted = 0
+    updated = 0
 
     redmine_ids = {entry["id"] for entry in entries}
 
-    # поиск всех записей в БД за период
     stmt = select(WorkHistory)
     if from_date:
         stmt = stmt.where(WorkHistory.spent_on >= from_date)
@@ -60,19 +60,37 @@ def sync_time_entries(
     
     local_entries = db.execute(stmt).scalars().all()
 
-    # удаление, если запись есть у нас, но её нет в Redmine
+    #  если в Redmine удалили
     for local in local_entries:
         if local.redmine_time_entry_id not in redmine_ids:
             db.delete(local)
             deleted += 1
 
-    # добавление, если записи нет у нас, но есть в Redmine
+    # добавление и обновление
     for entry in entries:
         stmt_check = select(WorkHistory).where(
             WorkHistory.redmine_time_entry_id == entry["id"]
         )
-        if db.execute(stmt_check).scalar_one_or_none() is not None:
-            skipped += 1
+        existing = db.execute(stmt_check).scalar_one_or_none()
+
+        activity = entry.get("activity") or {}
+        activity_name = activity.get("name")
+        
+        hours = float(entry["hours"])
+        spent_on = entry["spent_on"]
+
+        if existing is not None:
+            hours_changed = f"{float(existing.hours):.2f}" != f"{hours:.2f}"
+            date_changed = str(existing.spent_on) != str(spent_on)
+            activity_changed = str(existing.activity) != str(activity_name)
+
+            if hours_changed or date_changed or activity_changed:
+                existing.hours = hours
+                existing.spent_on = spent_on
+                existing.activity = activity_name
+                updated += 1
+            else:
+                skipped += 1
             continue
 
         project_id = entry["project"]["id"]
@@ -84,7 +102,6 @@ def sync_time_entries(
             continue
 
         issue = entry.get("issue") or {}
-        activity = entry.get("activity") or {}
 
         db.add(
             WorkHistory(
@@ -93,9 +110,9 @@ def sync_time_entries(
                 redmine_issue_id=issue.get("id"),
                 redmine_time_entry_id=entry["id"],
                 subject=None,
-                hours=entry["hours"],
-                spent_on=entry["spent_on"],
-                activity=activity.get("name"),
+                hours=hours,
+                spent_on=spent_on,
+                activity=activity_name,
             )
         )
         created += 1
@@ -105,5 +122,6 @@ def sync_time_entries(
         "created": created,
         "skipped": skipped,
         "deleted": deleted,
+        "updated": updated,
         "total": len(entries),
     }
