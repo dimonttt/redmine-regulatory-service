@@ -35,6 +35,9 @@ def run_calculation(
         else:
             period_end = date(period_year, period_month + 1, 1)
         sync_time_entries(db, date(period_year, period_month, 1), period_end)
+        
+        from app.services.sync import sync_monthly_aggregates
+        sync_monthly_aggregates(db, period_year, period_month)
 
         # расчёт
         results = calculate_client_hours(db, period_year, period_month)

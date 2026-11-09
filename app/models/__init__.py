@@ -5,6 +5,7 @@ from app.models.work_history import WorkHistory
 from app.models.calculation_run import CalculationRun
 from app.models.suggestion import Suggestion
 from app.models.created_task import CreatedTask
+from app.models.monthly_aggregate import MonthlyAggregate
 
 __all__ = [
     "Client",

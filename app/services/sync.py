@@ -1,12 +1,13 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.models.client import Client
 from app.models.work_history import WorkHistory
 from app.redmine.client import redmine_client
-
+from app.models.monthly_aggregate import MonthlyAggregate
+from sqlalchemy import func
 
 def sync_clients(db: Session) -> dict:
     # Синхронизирует проекты Redmine в таблицу clients
@@ -125,3 +126,43 @@ def sync_time_entries(
         "updated": updated,
         "total": len(entries),
     }
+
+
+def sync_monthly_aggregates(db: Session, period_year: int, period_month: int) -> dict:
+    # Пересчитывает сумму часов за месяц для всех клиентов
+    # Удаляем старые агрегаты за этот месяц
+    db.execute(
+        delete(MonthlyAggregate)
+        .where(MonthlyAggregate.period_year == period_year)
+        .where(MonthlyAggregate.period_month == period_month)
+    )
+
+    from datetime import date
+    period_start = date(period_year, period_month, 1)
+    if period_month == 12:
+        period_end = date(period_year + 1, 1, 1)
+    else:
+        period_end = date(period_year, period_month + 1, 1)
+
+    # Группируем часы по клиентам за период
+    results = db.execute(
+        select(
+            WorkHistory.client_id,
+            func.sum(WorkHistory.hours).label("total_hours")
+        )
+        .where(WorkHistory.spent_on >= period_start)
+        .where(WorkHistory.spent_on < period_end)
+        .group_by(WorkHistory.client_id)
+    ).all()
+
+    for client_id, total_hours in results:
+        db.add(
+            MonthlyAggregate(
+                client_id=client_id,
+                period_year=period_year,
+                period_month=period_month,
+                total_hours=float(total_hours or 0),
+            )
+        )
+    db.commit()
+    return {"aggregated_clients": len(results)}
