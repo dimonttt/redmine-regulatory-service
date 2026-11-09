@@ -1,4 +1,6 @@
 import json
+import logging
+
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +11,7 @@ from app.llm.schemas import LLMResponse
 from app.models.client import Client
 from app.models.work_history import WorkHistory
 
-
+logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """Ты - эксперт по сопровождению IT-инфраструктуры.
 Твоя задача - предложить новые полезные регламентные работы для клиента,
 у которого не хватает часов по договору. Предлагай только реальные технические
@@ -100,8 +102,7 @@ def generate_llm_suggestions(
         parsed = json.loads(cleaned)
         validated = LLMResponse(**parsed)
     except Exception as e:
-        # Если не получилось с первого раза, просим модель исправиться
-        print(f"Ошибка парсинга JSON (попытка 2): {e}")
+        logger.warning(f"Ошибка парсинга JSON (попытка 2): {e}")
         
         # Отправляем промпт еще раз с жестким указанием
         error_prompt = f"{prompt}\n\nВНИМАНИЕ: Твой предыдущий ответ был невалидным JSON! Обязательно добавь поле 'estimated_hours' и закрой все скобки."

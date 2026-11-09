@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.client import Client
+from app.models.monthly_aggregate import MonthlyAggregate
 from app.models.planned_hours import PlannedHours
 from app.models.work_history import WorkHistory
 
@@ -36,23 +37,28 @@ def calculate_client_hours(
             Client.id,
             Client.name,
             Client.redmine_project_id,
-            func.coalesce(actual_subq.c.actual_hours, 0).label("actual_hours"),
+            MonthlyAggregate.total_hours,
             PlannedHours.planned_hours,
             PlannedHours.threshold_hours,
         )
         .join(PlannedHours, PlannedHours.client_id == Client.id)
-        .outerjoin(actual_subq, actual_subq.c.client_id == Client.id)
+        .outerjoin(
+            MonthlyAggregate,
+            (MonthlyAggregate.client_id == Client.id) & 
+            (MonthlyAggregate.period_year == period_year) & 
+            (MonthlyAggregate.period_month == period_month)
+        )
         .where(PlannedHours.period_year == period_year)
         .where(PlannedHours.period_month == period_month)
         .where(Client.is_active.is_(True))
         .order_by(Client.name)
     )
-
+    
     rows = db.execute(stmt).all()
 
     results = []
     for row in rows:
-        actual = float(row.actual_hours or 0)
+        actual = float(row.total_hours or 0)
         planned = float(row.planned_hours)
         threshold = float(row.threshold_hours or 0)
         deficit = planned - actual

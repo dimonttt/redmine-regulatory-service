@@ -1,3 +1,5 @@
+import logging
+
 from datetime import date, datetime, UTC
 
 from sqlalchemy.orm import Session
@@ -9,7 +11,7 @@ from app.services.llm_generation import generate_llm_suggestions
 from app.services.matcher import select_works_for_client
 from app.services.sync import sync_clients, sync_time_entries
 
-
+logger = logging.getLogger(__name__)
 def run_calculation(
     db: Session,
     period_year: int,
@@ -97,7 +99,7 @@ def run_calculation(
                         )
                         total_suggestions += 1
                 except Exception as e:
-                    print(f"LLM failed for {r['client_name']}: {e}")
+                    logger.warning(f"LLM failed for {r['client_name']}: {e}")
 
         # завершение
         run.status = "COMPLETED"
