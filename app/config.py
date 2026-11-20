@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = "admin12345"
 
+    smtp_host: str = "smtp.yandex.ru"
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = "" 
+    report_email: str = ""
+
     @property
     def database_url(self) -> str:
         return (

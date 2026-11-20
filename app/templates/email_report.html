@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body { font-family: Arial, sans-serif; color: #333; background: #f4f6f8; padding: 20px; }
+            .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+            h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+            h2 { color: #2980b9; margin-top: 30px; font-size: 18px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .deficit { color: #e74c3c; font-weight: bold; }
+            .ok { color: #27ae60; }
+            .footer { margin-top: 40px; font-size: 12px; color: #999; text-align: center; }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Отчет по выработке часов</h1>
+            <p><strong>Дата формирования:</strong></p>
+
+            {% for client in clients %}
+            <h2>{{ client.name }}</h2>
+            <table>
+                <tr><th>План, ч</th><th>Факт<th>Недостаток, ч</th><th>Статус</th></tr>
+
+                <tr>
+                    <td>{{ client.planned_hours }}</td>
+                    <td>{{ client.actual_hours }}</td>
+                    <td class="{{ 'dificit' if client.below_threshold else 'ok'}}">{{ client.deficit_hours }}</td>
+                    <td>{{ 'Требуются работы' if client.below_threshold else 'Все в порядке' }}</td>
+                </tr>
+            </table>
+            {% if client. suggestions %}
+            <table>
+                <tr><th>Работа</th><th>Часы</th><th>Обоснование</th></tr>
+                {% for s in client.suggestions %}
+                <tr>
+                    <td>{{ s.title }}</td>
+                    <td>{{ s.estimated_hours }}</td>
+                    <td>{{ s.reason }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+            {% endfor %}
+
+            <div class = "footer">
+                Сервис Redmine Regulatory Works.
+            </div>
+        </div>
+    </body>
+</html>
