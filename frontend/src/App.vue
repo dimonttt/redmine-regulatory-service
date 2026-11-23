@@ -39,6 +39,9 @@
           <button @click="startRun" :disabled="loading" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; font-size: 16px; opacity: loading ? 0.6 : 1;">
             {{ loading ? 'Идет подсчет...' : 'Запустить расчет' }}
           </button>
+          <button @click="sendReport" style="padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px;">
+            Отправить отчёт
+          </button>
           <!-- Индикатор загрузки-->
           <div v-if="loading" style="display: flex; align-items: center; gap: 8px; color: #007bff; font-weight: bold;">
             <div style="width: 16px; height: 16px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
@@ -290,6 +293,21 @@ const createTask = async (id) => {
 onMounted(() => {
   if (token.value) fetchRuns();
 });
+
+const sendReport = async () => {
+  try {
+    const res = await api.get(`/api/send-report?period_year=${selectedYear.value}&period_month=${selectedMonth.value}`);
+    if (res.data.status === 'sent') {
+      alert('Отчёт успешно отправлен на почту!');
+    } else {
+      alert('Не удалось отправить отчёт. Проверьте настройки SMTP.');
+    }
+  } catch (e) {
+    console.error('Ошибка отправки:', e);
+    alert('Ошибка при отправке отчёта');
+  }
+};
+
 </script>
 
 <style>

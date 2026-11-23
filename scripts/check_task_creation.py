@@ -5,7 +5,7 @@ from app.services.task_creator import create_task_from_suggestion
 def main():
     db = SessionLocal()
     try:
-        suggestion_id = 1  # ← подставь свой id из шага 3
+        suggestion_id = 1
 
         print(f"Создание задачи из предложения id={suggestion_id}...")
         result = create_task_from_suggestion(db, suggestion_id)

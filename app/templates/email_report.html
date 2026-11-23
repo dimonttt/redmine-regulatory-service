@@ -18,7 +18,7 @@
     <body>
         <div class="container">
             <h1>Отчет по выработке часов</h1>
-            <p><strong>Дата формирования:</strong></p>
+            <p><strong>Дата формирования:</strong> {{ generated_at }}</p>
 
             {% for client in clients %}
             <h2>{{ client.name }}</h2>
@@ -47,7 +47,7 @@
             {% endfor %}
 
             <div class = "footer">
-                Сервис Redmine Regulatory Works.
+                Сервис Redmine Regulatory Works
             </div>
         </div>
     </body>
