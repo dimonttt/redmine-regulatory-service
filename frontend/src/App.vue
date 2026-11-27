@@ -36,8 +36,20 @@
           </label>
         </div>
         <div style="display: flex; align-items: center; gap: 15px;">
-          <button @click="startRun" :disabled="loading" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; font-size: 16px; opacity: loading ? 0.6 : 1;">
-            {{ loading ? 'Идет подсчет...' : 'Запустить расчет' }}
+          <button 
+            @click="startRun" 
+            :disabled="loading" 
+            :style="{ 
+              padding: '10px 20px', 
+              background: '#007bff', 
+              color: 'white', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontSize: '16px', 
+              opacity: loading ? 0.6 : 1 
+            }"
+            >
+              {{ loading ? 'Идет подсчет...' : 'Запустить расчет' }}
           </button>
           <button @click="sendReport" style="padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px;">
             Отправить отчёт

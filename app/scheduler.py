@@ -44,7 +44,7 @@ def scheduled_run():
                 ],
             })
 
-            send_report_email(year, month, clients_data)
+        send_report_email(year, month, clients_data)
     except Exception as e:
         logger.error(f"Ошибка при запуске расчета по расписанию: {e}")
     finally:
